@@ -8,3 +8,5 @@ splitbyintensity input.png output (where lower and upper are the values used fro
 generates 10 files called output_lower_upper.png
 
 i use this for laser cutter artwork so i can specify different settings for different parts of the image. i load them into lightburn on seperate layers and adjust settings as needed.
+
+builds with vcpkg and msvc.
