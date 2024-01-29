@@ -1,0 +1,105 @@
+on: [push]
+
+jobs:
+  build:
+    env:
+      buildDir: ${{ github.workspace }}/build
+    name: ${{ matrix.os }}-hosted-basic
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-20.04, macos-latest]
+        include:
+          - os: ubuntu-latest
+            triplet: x64-linux
+            build-type: Release
+          - os: macos-latest
+            triplet: x64-osx
+            build-type: Release
+          - os: ubuntu-20.04
+            triplet: x64-linux
+            build-type: Release
+            
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: clear CMakeCache
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-20.04'
+        run: |
+          rm -rf ${{ env.buildDir }}/CMakeCache.txt
+          rm -rf ${{ env.buildDir }}/CMakeFiles
+
+      # Add this step to install dependencies
+      - name: Install dependencies
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-20.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config
+  
+      - name: get-cmake
+        uses: lukka/get-cmake@latest
+
+      - name: Run vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          # Just install vcpkg for now, do not install any ports in this step yet.
+          setupOnly: true
+          # Location of the vcpkg as submodule of the repository.
+          #vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgGitCommitId: 'ff6867374598312866fecfc64736a334591ceace'
+          # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
+          # compute its hash and append this to the computed cache's key.
+          appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
+          vcpkgTriplet: ${{ matrix.triplet }}
+          # Ensure the vcpkg artifacts are cached, they are generated in the 'CMAKE_BINARY_DIR/vcpkg_installed'.
+          additionalCachedPaths: ${{ env.buildDir }}/vcpkg_installed
+      - name: 'Run CMake with Ninja, install dependencies with vcpkg, build with CMake'
+        uses: lukka/run-cmake@v3
+        with:
+          configurePreset: ninja-multi-vcpkg
+          buildPreset: ninja-multi-vcpkg
+          cmakeListsOrSettingsJson: CMakeListsTxtBasic
+          cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+          useVcpkgToolchainFile: true
+          cmakeAppendedArgs: '-GNinja -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} --config ${{ matrix.build-type }}'
+          buildDirectory: ${{ env.buildDir }}
+          buildPresetAdditionalArgs: "['--config Release']"
+
+      - name: Run CMake with Ninja
+        uses: lukka/run-cmake@v10
+        with:
+          cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+          configurePreset: 'release'
+          buildPreset: 'release'
+
+      - name: Upload artifacts
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: splitbyintensity_Windows_${{ matrix.os }}
+          path: ${{ github.workspace }}/bin/splitbyintensity.exe
+
+      - name: Upload artifacts
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: splitbyintensity_macos_${{ matrix.os }}
+          path: |
+            ${{ github.workspace }}/bin/splitbyintensity
+
+      - name: Upload artifacts
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: splitbyintensity_linux_${{ matrix.os }}
+          path: |
+            ${{ github.workspace }}/bin/splitbyintensity
+         
+      - name: Upload artifacts
+        if: matrix.os == 'ubuntu-20.04'
+        uses: actions/upload-artifact@v3
+        with:
+          name: splitbyintensity_${{ matrix.os }}
+          path: |
+            ${{ github.workspace }}/bin/splitbyintensity 
