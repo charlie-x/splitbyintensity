@@ -5,6 +5,20 @@
 const unsigned int levels = 10;
 
 /**
+ * Check if the provided cv::Mat image is not grayscale.
+ *
+ * @param image The image to check.
+ * @return true if the image is not grayscale, false otherwise.
+ */
+bool isNotGrayScale(const cv::Mat& image) {
+
+	// Check the number of channels in the image
+	// Grayscale images typically have 1 channel
+	// Color images have more than 1 channel (usually 3)
+	return image.channels() != 1;
+}
+
+/**
  * @brief Main application to process an image.
  *
  * the app takes an image path as a command line argument, loads the image,
@@ -17,6 +31,7 @@ const unsigned int levels = 10;
  * @return int Application exit code.
  */
 int main(int argc, char** argv) {
+
 	if (argc != 3) {
 		std::cerr << "Usage: " << argv[0] << " <ImagePath> <ouput>_range.png" << std::endl;
 		return -1;
@@ -35,9 +50,17 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	//gray conversion, check channels
 	cv::Mat grayImage;
-	cv::cvtColor(originalImage, grayImage, cv::COLOR_BGR2GRAY);
+
+	if (isNotGrayScale(originalImage)) {
+
+		//gray conversion, check channels
+		cv::cvtColor(originalImage, grayImage, cv::COLOR_BGR2GRAY);
+
+	} else {
+
+		grayImage = originalImage;
+	}
 
 	// intensity range division
 	int rangeSize = 256 / levels; // 256 levels of intensity, 10 outputs
