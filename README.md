@@ -9,4 +9,4 @@ generates 10 files called output_lower_upper.png
 
 i use this for laser cutter artwork so i can specify different settings for different parts of the image. i load them into lightburn on seperate layers and adjust settings as needed.
 
-builds with vcpkg and msvc.
+builds with vcpkg and msvc, also with CMake now, the github workflows can generate and upload the artifacts (unsigned so mac needs exceptions)
