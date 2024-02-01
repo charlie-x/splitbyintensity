@@ -89,7 +89,9 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		std::string filename = "range_" + std::to_string(lowerBound) + "_" + std::to_string(upperBound - 1) + ".png";
+		std::string filename = outputPrefix  + std::to_string(lowerBound) + "_" + std::to_string(upperBound - 1) + ".png";
+		
+		std::cout << filename << std::endl;
 
 		cv::imwrite(filename, rangeImageWithAlpha);
 	}
